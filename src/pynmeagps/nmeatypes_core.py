@@ -23,8 +23,9 @@ VALMSGID = 2
 ERR_IGNORE = 0
 ERR_LOG = 1
 ERR_RAISE = 2
+
 # proprietary messages where msgId is first element of payload:
-PROP_MSGIDS = ("UBX", "TNL", "ASHR", "GPPADV")
+PROP_MSGIDS = ("UBX", "TNL", "ASHR", "GPPADV", "SAT")
 
 GNSSLIST = {
     0: "GPS",
@@ -221,6 +222,10 @@ NMEA_MSGIDS = {
     "ZDA": "Time and Date",
     # "ZTG": "Zulu (UTC) time and time to go (to destination)",
 }
+
+# Propietary message ids
+# example $PUBX,00,... is stored as UBX00
+# first part of this id is in PROP_MSGIDS
 NMEA_MSGIDS_PROP = {
     # ***************************************************************
     # NMEA Proprietary message types
@@ -306,6 +311,18 @@ NMEA_MSGIDS_PROP = {
     "TNLREX": "Rover Extended Output",
     "TNLVGK": "Vector information",
     "TNLVHD": "Heading information",
+    # ***************************************************************
+    # Hemisphere Proprietary
+    # ***************************************************************
+    "SATATTSTAT": "Attitude statistics, heading diagnostic",
+    "SATGBS": "Receiver Autonomous Integrity Monitoring (RAIM)",
+    "SATHPR": "provides the true heading,pitch, roll, and time in a single message",
+    "SATINTLT": "Tilt measurements from the internal inclinometers in degrees. It delivers an output of crude accelerometer measurements of pitch and roll with no temperature compensation or calibration for GPS heading/pitch/roll.",
+    "SATBLV": "Contains RTK fix progress information",
+    "SATFVI": "Position, attitude and standard deviations.",
+    "SATRPTKPROG": "Contains RTK fix progress information",
+    "SATRTKSTAT": "Contains the most relevant parameters affecting RTK",
+    "SATVCT": "Provides the vector from the primary to the secondary antenna.",
     # ***************************************************************
     # Dummy message for testing only
     # ***************************************************************

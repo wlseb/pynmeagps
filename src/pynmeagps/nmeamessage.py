@@ -74,6 +74,7 @@ class NMEAMessage:
         self._hpnmeamode = hpnmeamode
         self._talker = talker
         self._msgID = msgID
+        self.payload_dict = dict()
         self._do_attributes(**kwargs)
         self._immutable = True  # once initialised, object is immutable
 
@@ -215,13 +216,16 @@ class NMEAMessage:
             return pindex
 
         setattr(self, keyr, val)  # add attribute to NMEAMessage object
+        self.payload_dict[keyr] = val
         # adjust sign of decimal lon (W = -ve) or lat (S = -ve)
         if att == nmt.LND and hasattr(self, "lon"):
             if isinstance(self.lon, float) and val == "W":
                 self.lon = -abs(self.lon)
+                self.payload_dict["lon"] = self.lon
         elif att == nmt.LAD and hasattr(self, "lat"):
             if isinstance(self.lat, float) and val == "S":
                 self.lat = -abs(self.lat)
+                self.payload_dict["lat"] = self.lat
         pindex += 1  # move on to next attribute in payload definition
 
         return pindex

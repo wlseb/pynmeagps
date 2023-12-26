@@ -1184,6 +1184,111 @@ NMEA_PAYLOADS_GET = {
         "PDOP": DE,
         "unit": CH,  # 'M'
     },
+    # ***************************************************************
+    # Hemisphere Proprietary message types
+    # https://www.hemispheregnss.com/resources/technical-documentation/
+    # ***************************************************************
+    "SATATTSTAT": {
+        "msgId": ST, # ATTSTAT
+        "s": IN,  # ID of the secondary antenna
+        "msep": ST, # custom separation between antennas manually entered (when the value is MOV, it means MOVEBASE is on)
+        "csep": DE, # auto GPS antenna separation
+        "heading": DE,
+        "type": CH,  # Heading indicator (N Heading used GNSS, G=Heading used gyroscope)
+        "pitch": DE,
+        "roll": DE,
+        "ant_dir": CH,  # The current setting of antenna directivity, value is P=antennas placed front and back, output pitch R= antennas placed left and right, output roll
+        "num_sat_sec": IN,  # The number of satellites used by the secondary antenna
+        "sys": ST, # Systems in use, array (GPS L1, L2, L2c, L5, Glonass G1, G2, Beidou B1, B2, B3, Galileo E1B, E5A, E5B, E5AB, E6, QZSS QL1, QL2, QL5)
+        "num_tracked": ST, # Number of satellites tracked for each system
+        "snr": CH,  # Quality of each SNR path (A > 20dB, B > 18dB, C > 15dB, D <= 15dB)
+        "num_used": ST, # Number of satellites used by each system
+    },
+    "SATGBS": {
+        "msgId": ST, # GBS
+        #TODO Implement this message
+    },
+    "SATHPR": {
+        "msgId": ST, # HPR
+        "utc": TM, # UTC time
+        "heading": DE, # Heading in degrees
+        "pitch": DE, # Pitch in degrees
+        "roll": DE, # Roll in degrees
+        "type": CH,  # Heading indicator (N Heading used GNSS, G=Heading used gyroscope)
+    },
+    "SATINTLT": {
+        "msgId": ST, # INTLT
+        "giro_pitch": DE, # Giro pitch in degrees
+        "giro_roll": DE, # Giro roll in degrees
+    },
+    "SATBLV": {
+        "msgId": ST, # BLV
+        #TODO Implement this message
+    },
+    "SATFVI": {
+        "msgId": ST, # FVI
+        "utc": TM, # UTC time
+        "lat": LA, # Latitude
+        "lon": LN, # Longitude
+        "alt": DE, # Altitude
+        "std_lat": DE, # Standard deviation latitude in meters
+        "std_lon": DE, # Standard deviation longitude in meters
+        "std_alt": DE, # Standard deviation altitude in meters
+        "heading": DE, # Heading in degrees
+        "std_hd": DE, # Standard deviation heading in degrees
+        "pitch": DE, # Pitch in degrees
+        "std_pt": DE, # Standard deviation heading in degrees
+        "roll": DE, # Roll in degrees
+        "std_rl": DE, # Standard deviation heading in degrees
+        "v_east": DE, # East to speed in m/s
+        "v_north": DE, # North to speed in m/s
+        "v_up": DE, # Vertical  speed in m/s
+        "sog": DE, # Speed over ground in m/s
+        "psv_east": DE, # Primary to secondary vector, east component in m
+        "psv_north": DE, # Primary to secondary vector, north component in m
+        "psv_up": DE, # Primary to secondary vector, up component in m
+        "zone": ST, # Projection area
+        "u_east": DE, # East to position of projection area
+        "u_north": DE, # North to position of projection area
+        "sat_p": IN, # Number satellites primary antenna
+        "sat_s": IN, # Number satellites secondary antenna
+        "pos_ind": IN, # Position indicator: 0 no, 1 autonomous, 2 differentially corrected, 4 RTK Atlas converged, 5 RTK Atlas converging
+        "hd_ind": IN, # Heading indicator, 1 heading valid
+        "dist_base_rover": DE, # Distance base rover in m
+        "age_corr": DE, # Age of differential corrections in s
+    },
+    "SATRPTKPROG": {
+        "msgId": ST, # RPTKPROG
+        #TODO Implement this message
+    },
+    "SATRTKSTAT": {
+        "msgId": ST, # RTKSTAT
+        "mode": ST, # Mode (FIX,FLT,DIF,AUT,NO)
+        "correction": ST, # Correction type (DFX,ROX,CMR,RTCM3,CMR+,...)
+        "age_corr": IN, # Age of differential corrections in s
+        "sub_code": ST, # Subscription code, see TRM for meaning
+        "dist": DE, # Distance to base in km
+        "sys": ST, # Systems in use, array (GPS L1, L2, L2c, L5, Glonass G1, G2, Beidou B1, B2, B3, Galileo E1B, E5A, E5B, E5AB, E6, QZSS QL1, QL2, QL5)
+        "num_used": ST, # Number of satellites used by each system
+        "snr": CH, # Quality of each SNR path (A > 20dB, B > 18dB, C > 15dB, D <= 15dB)
+        "rsf": IN, # Rover slip flag (non zero if parity errors in last 5 minutes, good for detecting jamming and TCXO issues)
+        "bsf": IN, # Base slip flag
+        "hse": DE, # Horizontal accuracy estimation
+        "accstat": HX, # Accuracy status, see TRM for meaning
+        "snt": IN, # Ionospheric scintillation (0 little or no scintillation - does not adversely affect RTK solution, 1-100 (scintillation detected - adversely affects RTK solution)
+    },
+    "SATVCT": {
+        "msgId": ST, # VCT
+        "id": IN, # antenna pair ID (always 1 for now)
+        "utc": TM, # UTC time
+        "heading": DE, # Heading in degrees
+        "pitch": DE, # Pitch in degrees
+        "roll": DE, # Roll in degrees
+        "normal": CH, # Normal, not coasting
+        "psv_north": DE, # Primary to secondary vector, north component in m
+        "psv_east": DE, # Primary to secondary vector, east component in m
+        "psv_up": DE, # Primary to secondary vector, up component in m
+    },
     # *********************************************
     # Dummy message for error testing
     # *********************************************

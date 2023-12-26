@@ -50,12 +50,48 @@ def get_parts(message: object) -> tuple:
         if hdr[0:1] == "P":  # proprietary
             talker = "P"
             msgid = hdr[1:]
+            payload = concat_payload(payload)
         else:  # standard
             talker = hdr[0:2]
             msgid = hdr[2:]
         return content, talker, msgid, payload, cksum
     except Exception as err:
         raise nme.NMEAMessageError(f"Badly formed message {message}") from err
+    
+def concat_payload(payload: []) -> []:
+    """
+    Hemisphere messages contain groups of attributes with parentheses ,(,A,B,C,)(,D,E,F,),
+    remove parentheses and reconcatenate attributes in groups to string 1=A,B,C 2=D,E,F
+    """
+    payload_new = []
+    in_group = False
+    first = True
+    for elem in payload:
+        if elem == "(":
+            if in_group:
+                return payload
+            else:
+                in_group = True
+                first = True
+        elif elem == ")(":
+            first = True
+        elif elem == ")":
+            if in_group:
+                in_group = False
+            else:
+                return payload
+        elif in_group:
+            if first:
+                payload_new.append(elem)
+                first = False
+            else:
+                payload_new[-1] += "," + elem # concatenate attributes in group to single string
+        else:
+            payload_new.append(elem) # outside group copy from array to array
+    if in_group: # Must not be in group after all attributes
+        return payload
+    else:
+        return payload_new
 
 
 def calc_checksum(content: object) -> str:
