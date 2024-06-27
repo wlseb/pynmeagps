@@ -98,22 +98,47 @@ class NMEAFrame:
                 else:
                     raise nme.NMEAStreamError(f"GSV idx {idx} not found with {msg.numSV} / {msg.numMsg}")
 
-        else:
-            if msg.identity in self.messages.keys():
-                # same message was already captured
-                return True
-            else:
-                self.messages[msg.identity] = msg
-                self.num_messages += 1
-                if msg.identity in ["GPGGA"]:
-                    if self.utc_time is None:
-                        self.utc_time = msg.time
-                    elif msg.time != self.utc_time:
-                        raise nme.NMEAStreamError(f"Inconsistent UTC time inside frame detected for message identity={msg.identity}")
-                    
-    def get_message_as_dict(self, identity: str) -> dict: 
+        elif msg.identity in self.messages.keys():
+            # same message was already captured
+            return True
+        else: # other messages (not GSV or duplicate key)
+            # update / check msg time
+            msg_time = self.get_time_from_message(msg)
+            if self.utc_time is None and msg_time is not None:
+                self.utc_time = msg_time
+            elif msg_time is not None and self.utc_time is not None and msg_time != self.utc_time:
+                raise nme.NMEAStreamError(f"Inconsistent UTC time inside frame detected for message identity={msg.identity}")
+            # insert
+            self.messages[msg.identity] = msg
+            self.num_messages += 1
+        return False
+
+    @staticmethod
+    def get_time_from_message(msg: NMEAMessage):
+        # More messages containing time to be added if needed
+        msg_time = None
+        if msg.identity in ["GPGGA"]:
+            msg_time = msg.time
+        elif msg.identity in ["PSATFVI"]:
+            msg_time = msg.utc
+        return msg_time
+
+    def is_message_time_different(self, msg: NMEAMessage):
+        msg_time = self.get_time_from_message(msg)
+        return msg_time is not None and self.utc_time is not None and msg_time != self.utc_time
+
+
+    def get_message_as_dict(self, identity: str) -> dict:
+        """
+        Returns a dictonary of all fields of given message-id where
+        key is the field prefixed with message-id
+        and value is the data of the field.
+        """
         if identity in self.messages.keys():
             msg_dict = self.messages[identity].payload_dict
+            # remove msgId from dict
+            _ = msg_dict.pop('msgId', '')
+
             # add identity as prefix
             prefix = identity.lower()
             if prefix.startswith("psat"):
@@ -121,21 +146,25 @@ class NMEAFrame:
             return {f"{prefix}_{key}": value for key, value in msg_dict.items()}
         else:
             return None
-        
-    def get_messages_as_dict(self, allowed: list) -> dict:
+
+    def get_messages_as_dict(self, id_filter: list, allow_msg_id_missing = True) -> dict:
+        """
+        id_filter: Set to None to return all messages, provide list to filter """
         full_dict = dict()
-        if allowed is None:
+        if id_filter is None:
             for identity in self.messages.keys():
                 msg_dict = self.get_message_as_dict(identity)
                 full_dict.update(msg_dict)
         else:
-            for identity in allowed:
+            for identity in id_filter:
                 msg_dict = self.get_message_as_dict(identity)
-                if msg_dict is None:
+                if msg_dict is not None:
+                    full_dict.update(msg_dict)
+                elif not allow_msg_id_missing:
                     raise nme.NMEAStreamError(f"Missing message in frame {identity}")
-                full_dict.update(msg_dict)
+
         return full_dict
-    
+
     def get_satellites_in_view_snrs_as_dict(self) -> dict:
         # sort snrs and add sv_ prefix
         retval = dict()
@@ -148,6 +177,7 @@ class NMEAFrame:
         #for key, value in enumerate(sv_in_view_message):
         return True
         #TODO return self.gpgga_message is not None
+
 
 def open_nmea(inputfile: str, new_frame_msg_id : str = 'GPGGA', included_msg_ids: [str] = ["GPGGA"], num_msg: int = None, verbose = False) -> pd.DataFrame:
     """
@@ -179,13 +209,14 @@ def open_nmea(inputfile: str, new_frame_msg_id : str = 'GPGGA', included_msg_ids
                 ) as err:
                     errormsg = str(err)
 
-                # message objects processing to output data
+                # adding message objects to frames
                 if message is not None or errormsg is None:
-                    # trigger new frame at e.g. GPGGA (depends on receiver). 
-                    if message.identity == new_frame_msg_id and nmea_frame.num_messages > 0:
+                    # Create new frame at e.g. GPGGA (depends on receiver).
+                    if (message.identity == new_frame_msg_id and nmea_frame.num_messages > 0) or nmea_frame.is_message_time_different(message):
                         # create a dictionary representing line in pandas DataFrame
                         try:
                             data = nmea_frame.get_messages_as_dict(included_msg_ids)
+                            data["utc"] = nmea_frame.utc_time
                             data.update(nmea_frame.get_satellites_in_view_snrs_as_dict())
                             data_arr.append(data)
                         except (
@@ -202,12 +233,12 @@ def open_nmea(inputfile: str, new_frame_msg_id : str = 'GPGGA', included_msg_ids
                         nme.NMEAStreamError
                     ) as err:
                         errormsg = str(err)
-                    
+
                 if errormsg is not None:
                     errcount += 1
                     if verbose:
                         print(f"{line} ({errormsg} , utc {nmea_frame.utc_time})")
-                
+
                 msgcount += 1
                 if num_msg is not None and msgcount > num_msg:
                     print(f"\nReached specified maximum message count {num_msg}, stopping...")
@@ -219,7 +250,7 @@ def open_nmea(inputfile: str, new_frame_msg_id : str = 'GPGGA', included_msg_ids
     except FileNotFoundError:
         print(f"Error: File '{inputfile}' not found.")
     return df
-        
+
 
 def main():
     parser = argparse.ArgumentParser(description='Parse NMEA data from a file and annotate it.')
